@@ -139,16 +139,24 @@ class Train:
         if num_grey_levels is None:
             num_grey_levels = self.image_extraction_params['lbglcm']['number_of_grey_levels']
             pass
-        if num_neighbors is None:
-            num_neighbors = self.image_extraction_params['lbglcm']['number_of_neighbors']
-            pass
         if radius_of_neighbors is None:
             radius_of_neighbors = self.image_extraction_params['lbglcm']['radius_of_neighbors']
             pass
-        if radius_of_neighbors is None:
-            radius_of_neighbors = self.image_extraction_params['lbglcm']['method']        
+        if num_neighbors is None and radius_of_neighbors is None:
+            num_neighbors = self.image_extraction_params['lbglcm']['number_of_neighbors']
+            pass
+        else:
+            num_neighbors = int(8*radius_of_neighbors)
+            pass
+        if method is None:
+            method = self.image_extraction_params['lbglcm']['method']        
             pass
 
+        print('Dist is: ',dist)
+        print('Angle is: ',angle)
+        print('Radius is: ', radius_of_neighbors)
+        print('Num neighbor is', num_neighbors)
+        
         features = {}
         contrasts = []
         dissimilarities = []
@@ -200,8 +208,9 @@ class Train:
     #convert dictionary to dataframe
         
         self.lbglcm_image_features = pd.DataFrame(features)
+        print(self.lbglcm_image_features)
 
-    def prepare_dataset_for_supervised_learning(self, image_feature_dataframe, test_size):
+    def prepare_dataset_for_supervised_learning(self, image_feature_dataframe, test_size, feature_type):
         
         y = image_feature_dataframe.pop('type')
         x = image_feature_dataframe
