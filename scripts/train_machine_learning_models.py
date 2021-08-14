@@ -222,21 +222,31 @@ class Train:
                 self.coded_y_values[y_encoded[i]] = y_unique[j]
                 j += 1
         
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x, y_encoded, test_size=test_size, random_state=42)
+        if feature_type == "GLCM":
+            x_train, x_test, y_train, y_test = train_test_split(x, y_encoded, test_size=test_size, random_state=42)
+            self.glcm_split_dataset = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
+        if feature_type == "LBGLCM":
+            x_train, x_test, y_train, y_test = train_test_split(x, y_encoded, test_size=test_size, random_state=42)
+            self.lbglcm_split_dataset = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
     def train_random_forest_classifier(self, number_of_trees, max_features_to_classify,
                                         min_sample_leaf, max_leaf_nodes, number_of_parallel_workers):
 
-        classifier = RandomForestClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=25, max_features=max_features_to_classify,
+        self.trained_classifier_models['random_forest_glcm'] = RandomForestClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=25, max_features=max_features_to_classify,
                                             max_leaf_nodes=max_leaf_nodes, oob_score=True, max_depth=None, min_samples_leaf=min_sample_leaf)
 
-        classifier.fit(self.x_train, self.y_train)
+        self.trained_classifier_models['random_forest_lbglcm'] = RandomForestClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=25, max_features=max_features_to_classify,
+                                            max_leaf_nodes=max_leaf_nodes, oob_score=True, max_depth=None, min_samples_leaf=min_sample_leaf)
 
-        y_prediction = classifier.predict(self.x_test)
-        accuracy_of_model = accuracy_score(self.y_test, y_prediction)
+        self.trained_classifier_models['random_forest_glcm'].fit(self.glcm_split_dataset['x_train'], self.glcm_split_dataset['y_train'])
+        self.trained_classifier_models['random_forest_lbglcm'].fit(self.lbglcm_split_dataset['x_train'], self.lbglcm_split_dataset['y_train'])
 
-        return classifier, accuracy_of_model
+        y_prediction = self.trained_classifier_models['random_forest_glcm'].predict(self.glcm_split_dataset['x_test'])
+        self.model_accuracies['random_forest_glcm']  = accuracy_score(self.glcm_split_dataset['y_test'], y_prediction)
+
+        y_prediction = self.trained_classifier_models['random_forest_lbglcm'].predict(self.lbglcm_split_dataset['x_test'])
+        self.model_accuracies['random_forest_lbglcm'] = accuracy_score(self.lbglcm_split_dataset['y_test'], y_prediction)
 
 
     def train_xtra_trees_classifier(self, number_of_trees, max_features_to_classify,
