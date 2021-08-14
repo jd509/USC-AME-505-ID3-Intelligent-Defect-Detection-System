@@ -34,7 +34,7 @@ import json
 class Train:
 
     def __init__(self, dataset_directory):
-        self.dataset_directory = dataset_directory
+        self.dataset_directory = dataset_directory + '/'
 
         self.config_directory = os.path.dirname(os.getcwd()) + '/config/'
         self.image_extraction_config_file = self.config_directory + '/image_feature_extraction_config.json'
@@ -43,14 +43,12 @@ class Train:
             self.image_extraction_params = json.load(f)
 
         self.classification_labels = []
+        print(self.dataset_directory)
         for label in os.listdir(self.dataset_directory):
-            if os.path.isdir(label):
+            if os.path.isdir(self.dataset_directory + label + '/'):
                 self.classification_labels.append(label)
+        print(self.classification_labels)
         
-        self.x_train = None
-        self.y_train = None
-        self.x_test = None
-        self.y_test = None
         self.coded_y_values = {}
 
     def extract_features_using_glcm(self, 
