@@ -252,16 +252,23 @@ class Train:
     def train_xtra_trees_classifier(self, number_of_trees, max_features_to_classify,
                                          min_sample_leaf, max_leaf_nodes, number_of_parallel_workers):
 
-        classifier = ExtraTreesClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=0, max_leaf_nodes=max_leaf_nodes,
+        self.trained_classifier_models['xtra_trees_glcm'] = ExtraTreesClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=0, max_leaf_nodes=max_leaf_nodes,
                                max_features=max_features_to_classify, oob_score=True, max_depth=15, min_samples_leaf=min_sample_leaf,
                                bootstrap=True)
 
-        classifier.fit(self.x_train, self.y_train)
+        self.trained_classifier_models['xtra_trees_lbglcm'] = ExtraTreesClassifier(n_estimators=number_of_trees, n_jobs=number_of_parallel_workers, random_state=0, max_leaf_nodes=max_leaf_nodes,
+                               max_features=max_features_to_classify, oob_score=True, max_depth=15, min_samples_leaf=min_sample_leaf,
+                               bootstrap=True)
 
-        y_prediction = classifier.predict(self.x_test)
-        accuracy_of_model = accuracy_score(self.y_test, y_prediction)
+        self.trained_classifier_models['xtra_trees_glcm'].fit(self.glcm_split_dataset['x_train'], self.glcm_split_dataset['y_train'])
+        self.trained_classifier_models['xtra_trees_lbglcm'].fit(self.lbglcm_split_dataset['x_train'], self.lbglcm_split_dataset['y_train'])
+        
+        y_prediction = self.trained_classifier_models['xtra_trees_glcm'].predict(self.glcm_split_dataset['x_test'])
+        self.model_accuracies['xtra_trees_glcm']  = accuracy_score(self.glcm_split_dataset['y_test'], y_prediction)
 
-        return classifier, accuracy_of_model
+        y_prediction = self.trained_classifier_models['xtra_trees_lbglcm'].predict(self.lbglcm_split_dataset['x_test'])
+        self.model_accuracies['xtra_trees_lbglcm']  = accuracy_score(self.lbglcm_split_dataset['y_test'], y_prediction)
+
     
     def train_gradient_boosting_classifier(self, number_of_estimators, max_features_to_classify,
                                                 loss_function, learning_rate, max_leaf_nodes):
