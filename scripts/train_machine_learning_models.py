@@ -273,16 +273,22 @@ class Train:
     def train_gradient_boosting_classifier(self, number_of_estimators, max_features_to_classify,
                                                 loss_function, learning_rate, max_leaf_nodes):
 
-        classifier = GradientBoostingClassifier(loss=loss_function, n_estimators=number_of_estimators, learning_rate=learning_rate,
+        self.trained_classifier_models['gradient_boosting_glcm'] = GradientBoostingClassifier(loss=loss_function, n_estimators=number_of_estimators, learning_rate=learning_rate,
                                                 max_features=max_features_to_classify, max_depth=None, max_leaf_nodes=max_leaf_nodes, random_state=9,
                                                 subsample=0.5)
 
-        classifier.fit(self.x_train, self.y_train)
+        self.trained_classifier_models['gradient_boosting_lbglcm'] = GradientBoostingClassifier(loss=loss_function, n_estimators=number_of_estimators, learning_rate=learning_rate,
+                                                max_features=max_features_to_classify, max_depth=None, max_leaf_nodes=max_leaf_nodes, random_state=9,
+                                                subsample=0.5)
 
-        y_prediction = classifier.predict(self.x_test)
-        accuracy_of_model = accuracy_score(self.y_test, y_prediction)
+        self.trained_classifier_models['gradient_boosting_glcm'].fit(self.glcm_split_dataset['x_train'], self.glcm_split_dataset['y_train'])
+        self.trained_classifier_models['gradient_boosting_lbglcm'].fit(self.lbglcm_split_dataset['x_train'], self.lbglcm_split_dataset['y_train'])
+        
+        y_prediction = self.trained_classifier_models['gradient_boosting_glcm'].predict(self.glcm_split_dataset['x_test'])
+        self.model_accuracies['gradient_boosting_glcm']  = accuracy_score(self.glcm_split_dataset['y_test'], y_prediction)
 
-        return classifier, accuracy_of_model
+        y_prediction = self.trained_classifier_models['gradient_boosting_lbglcm'].predict(self.lbglcm_split_dataset['x_test'])
+        self.model_accuracies['gradient_boosting_lbglcm']  = accuracy_score(self.lbglcm_split_dataset['y_test'], y_prediction)
                                                         
     def CNN(self, epoch, val_split, save_model):
 
