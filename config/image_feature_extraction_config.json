@@ -3,14 +3,14 @@
     {
         "pixel_offset_distance": 0,
         "pixel_pair_angles": 0,
-        "number_of_grey_levels":255
+        "number_of_grey_levels":256
     },
     "lbglcm":
     {
 
         "pixel_offset_distance": 0,
         "pixel_pair_angles": 0,
-        "number_of_grey_levels":255,
+        "number_of_grey_levels":256,
         "number_of_neighbors":8,
         "radius_of_neighbors":16,
         "method":"uniform"
