@@ -50,6 +50,8 @@ class Train:
         print(self.classification_labels)
         
         self.coded_y_values = {}
+        self.trained_classifier_models = {}
+        self.model_accuracies = {}
 
     def extract_features_using_glcm(self, 
                                     dist = None, 
@@ -67,6 +69,9 @@ class Train:
         if num_grey_levels is None:
             num_grey_levels = self.image_extraction_params['glcm']['number_of_grey_levels']
             pass
+
+        print('Dist is: ',dist)
+        print('Angle is: ',angle)
 
         features = {}
         contrasts = []
@@ -114,7 +119,7 @@ class Train:
     #convert dictionary to dataframe
         
         self.glcm_image_features = pd.DataFrame(features)
-
+        print(self.glcm_image_features)
 
     def extract_features_using_lbglcm(self,
                                         dist = None, 
