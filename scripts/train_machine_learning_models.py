@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 #importing os module
+from operator import mod
 import os
+from pathlib import Path
 from keras.metrics import accuracy
 
 #importing numpy and pandas for computation and storage
@@ -338,7 +340,7 @@ class Train:
         model = create_model()
 
         if save_model:
-            filepath = os.path.dirname(os.getcwd()) + '/' + 'CNN.h5'
+            filepath = os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt'
             model.save(filepath, overwrite=True, include_optimizer=True)
 
         #Generating history of the model and fitting dataset
@@ -351,14 +353,14 @@ class Train:
         #Getting validation accuracy
         val_acc = history.history['val_accuracy']
 
-        return val_acc, model, val_data_gen
-
+        self.trained_classifier_models['CNN'] = model       
+        self.model_accuracies['CNN'] = val_acc
 
     #Load Pretrained CNN Model
-    def pretrained_CNN(self):
+    def pretrained_CNN(self, validation_split):
 
         # give validation split here
-        val_split = 0.2
+        val_split = validation_split
 
         #Training and test data generation with needed batch size
         dataset_image_generator = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True, vertical_flip=True,
@@ -397,13 +399,14 @@ class Train:
         new_model = create_model()
 
         #*************************Loading Checkpoint Path***********************************#
-        check_path = ''
+        check_path = os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt'
 
         #Loading weights from the checkpoint
         new_model.load_weights(check_path)
 
         #Getting loss and accuracy values
         loss, acc = new_model.evaluate(val_data_gen)
-        return acc, new_model
 
+        self.trained_classifier_models['CNN'] = new_model       
+        self.model_accuracies['CNN'] = acc
 

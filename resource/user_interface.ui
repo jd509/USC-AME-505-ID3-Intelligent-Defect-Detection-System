@@ -29,7 +29,7 @@
     <string notr="true">background-color: rgb(46, 52, 54);</string>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="training_page">
     <widget class="QFrame" name="frame">
@@ -2251,6 +2251,26 @@ color: rgb(255, 255, 255);</string>
           <height>21</height>
          </rect>
         </property>
+        <item>
+         <property name="text">
+          <string> </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>sqrt</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>log2</string>
+         </property>
+        </item>
        </widget>
        <widget class="QPushButton" name="train_rf_model_btn">
         <property name="geometry">
@@ -2929,6 +2949,26 @@ color: rgb(255, 255, 255);</string>
           <height>21</height>
          </rect>
         </property>
+        <item>
+         <property name="text">
+          <string> </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>sqrt</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>log2</string>
+         </property>
+        </item>
        </widget>
        <widget class="QLabel" name="label_16">
         <property name="geometry">
@@ -7853,6 +7893,26 @@ color: rgb(255, 255, 255);</string>
           <height>21</height>
          </rect>
         </property>
+        <item>
+         <property name="text">
+          <string> </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>auto</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>sqrt</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>log2</string>
+         </property>
+        </item>
        </widget>
        <widget class="QLabel" name="label_20">
         <property name="geometry">
