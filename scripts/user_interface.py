@@ -113,7 +113,31 @@ class UserInterface(QWidget):
             self.model_training_obj.train_gradient_boosting_classifier(100, 'auto', 'deviance', 0.2, 1500)
             print(self.model_training_obj.model_accuracies['gradient_boosting_glcm'])
             print(self.model_training_obj.model_accuracies['gradient_boosting_lbglcm'])
-
+    def train_convolutional_neural_network_model(self):
+        cnn_checkpoint_file = Path(os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt')
+        try:
+            self.epochs_for_training = int(self.ui.num_epochs_train_cnn_txtbox.text())
+            self.validation_split_train_cnn = float(self.ui.validation_split_train_cnn_txtbox.text())
+        except ValueError:
+            if not self.ui.pretrained_model_chckbox.isChecked() and cnn_checkpoint_file.exists():
+                prompt = QtWidgets.QMessageBox()
+                prompt.setWindowTitle("Input Error")
+                prompt.setText("Please enter an int value for epochs and float value for validation split")
+                prompt.setIcon(QtWidgets.QMessageBox.Critical)
+                ret = prompt.exec_()
+        if not self.ui.pretrained_model_chckbox.isChecked():
+            # self.cnn_thread = threading.Thread(target=self.model_training_obj.CNN, 
+            #                                                 kwargs={'epoch':self.epochs_for_training, 
+            #                                                       'val_split':self.validation_split_train_cnn,
+            #                                                       'save_model': True})
+            self.model_training_obj.CNN(self.epochs_for_training, self.validation_split_train_cnn, True)
+            self.ui.status_textbox.setText('CNN model trained!')
+        else:
+            # self.cnn_thread = threading.Thread(target=self.model_training_obj.pretrained_CNN, 
+            #                                                 kwargs={'validation_split':self.validation_split_train_cnn})
+            self.model_training_obj.pretrained_CNN(self.validation_split_train_cnn)
+            self.ui.status_textbox.setText('Using pretrained CNN model')
+    
             
 
 if __name__ == "__main__":
