@@ -54,7 +54,6 @@ class Train:
         self.coded_y_values = {}
         self.trained_classifier_models = {}
         self.model_accuracies = {}
-
     def extract_features_using_glcm(self, 
                                     dist = None, 
                                     angle = None, 
