@@ -1,13 +1,14 @@
 #importing modules
-import os, sys
+import os, sys, threading
+from pathlib import Path
 
 #import GUI modules
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from PyQt5.QtCore import QObject, QRunnable, QSize, QThread, QThreadPool, pyqtSlot
 from PyQt5.QtGui import QIcon, QImage, QPalette, QBrush
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QWidget, QMessageBox, QProgressDialog
+from numpy.core.fromnumeric import around
 from train_machine_learning_models import Train
-import threading, time
 
 
 class UserInterface(QWidget):
@@ -27,6 +28,8 @@ class UserInterface(QWidget):
         self.ui.train_rf_model_btn.clicked[bool].connect(self.train_random_forest_model)
         self.ui.train_xtra_trees_model_btn.clicked[bool].connect(self.train_xtra_trees_model)
         self.ui.train_gradient_boosting_model_btn.clicked[bool].connect(self.train_gradient_boosting_model)
+        self.ui.train_cnn_model_btn.clicked[bool].connect(self.train_convolutional_neural_network_model)
+        self.ui.display_training_accuracy_btn.clicked[bool].connect(self.display_training_accuracy)
 
         self.show()
 
@@ -35,6 +38,7 @@ class UserInterface(QWidget):
         self.ui.dataset_location_txtbox.setText(self.dataset_folder_path)
         self.model_training_obj = Train(self.dataset_folder_path)
         print(self.model_training_obj.dataset_directory)
+        self.ui.status_textbox.setText('Loaded Dataset!')
 
     def extract_glcm_features(self):
         try:
@@ -43,13 +47,14 @@ class UserInterface(QWidget):
         except ValueError:
             prompt = QtWidgets.QMessageBox()
             prompt.setWindowTitle("Input Error")
-            prompt.setText("Please enter a floating point value in the text box")
+            prompt.setText("Please enter a float value for pixel distance and integer for pair angle for in the text box")
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
             self.model_training_obj.extract_features_using_glcm(dist=self.glcm_pixel_distance, 
                                                                 angle=self.glcm_pixel_pair_angle)
             self.model_training_obj.prepare_dataset_for_supervised_learning(self.model_training_obj.glcm_image_features, 0.25, "GLCM")
+            self.ui.status_textbox.setText('GLCM features computed!')
 
     def extract_lbglcm_features(self):
         try:
@@ -67,6 +72,7 @@ class UserInterface(QWidget):
                                                                 angle=self.lbglcm_pixel_pair_angle, 
                                                                 radius_of_neighbors=self.lbglcm_radius_of_neighbors)
             self.model_training_obj.prepare_dataset_for_supervised_learning(self.model_training_obj.lbglcm_image_features, 0.25, "LBGLCM")
+            self.ui.status_textbox.setText('LBGLCM features computed!')
 
     def train_random_forest_model(self):
         try:
@@ -75,13 +81,15 @@ class UserInterface(QWidget):
         except ValueError:
             prompt = QtWidgets.QMessageBox()
             prompt.setWindowTitle("Input Error")
-            prompt.setText("Please enter an int value for pixel pair angle and floating point values for others")
+            prompt.setText("Please enter an int value for number of trees")
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_random_forest_classifier(100, 'auto',1,1500,-1)
-            print(self.model_training_obj.model_accuracies['random_forest_glcm'])
-            print(self.model_training_obj.model_accuracies['random_forest_lbglcm'])
+            self.model_training_obj.train_random_forest_classifier(self.number_of_trees_rf_model, self.maximum_features_selected_rf,1,1500,-1)
+            # self.random_forest_training_thread = threading.Thread(target=self.model_training_obj.train_random_forest_classifier, 
+            #                                                 kwargs={'number_of_trees':self.number_of_trees_rf_model, 
+            #                                                   'max_features_to_classify':self.maximum_features_selected_rf})
+            self.ui.status_textbox.setText('Random Forest model trained!')
     
     def train_xtra_trees_model(self):
         try:
@@ -90,13 +98,17 @@ class UserInterface(QWidget):
         except ValueError:
             prompt = QtWidgets.QMessageBox()
             prompt.setWindowTitle("Input Error")
-            prompt.setText("Please enter an int value for pixel pair angle and floating point values for others")
+            prompt.setText("Please enter an int value for number of trees")
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_xtra_trees_classifier(100, 'auto', 1, 1500, -1)
+            self.model_training_obj.train_xtra_trees_classifier(self.number_of_trees_xtra_trees_model, self.maximum_features_selected_xtra_trees, 1, 1500, -1)
             print(self.model_training_obj.model_accuracies['xtra_trees_glcm'])
             print(self.model_training_obj.model_accuracies['xtra_trees_lbglcm'])
+            # self.extra_trees_training_thread = threading.Thread(target=self.model_training_obj.train_xtra_trees_classifier, 
+            #                                                 kwargs={'number_of_trees':self.number_of_trees_xtra_trees_mode, 
+            #                                                       'max_features_to_classify':self.maximum_features_selected_xtra_trees})
+            self.ui.status_textbox.setText('Extra Trees model trained!')
 
     def train_gradient_boosting_model(self):
         try:
@@ -106,13 +118,18 @@ class UserInterface(QWidget):
         except ValueError:
             prompt = QtWidgets.QMessageBox()
             prompt.setWindowTitle("Input Error")
-            prompt.setText("Please enter an int value for pixel pair angle and floating point values for others")
+            prompt.setText("Please enter an int value for number of estimators and float value for learning rate")
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_gradient_boosting_classifier(100, 'auto', 'deviance', 0.2, 1500)
+            self.model_training_obj.train_gradient_boosting_classifier(self.num_estimators_train_gb_model, self.max_features_train_gb_model, 'deviance', 0.2, 1500)
             print(self.model_training_obj.model_accuracies['gradient_boosting_glcm'])
             print(self.model_training_obj.model_accuracies['gradient_boosting_lbglcm'])
+            # self.gradient_boosting_thread = threading.Thread(target=self.model_training_obj.train_gradient_boosting_classifier, 
+            #                                                 kwargs={'number_of_trees':self.num_estimators_train_gb_model, 
+            #                                                       'max_features_to_classify':self.max_features_train_gb_model})
+            self.ui.status_textbox.setText('Gradient Boosting model trained!')
+    
     def train_convolutional_neural_network_model(self):
         cnn_checkpoint_file = Path(os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt')
         try:
@@ -138,7 +155,9 @@ class UserInterface(QWidget):
             self.model_training_obj.pretrained_CNN(self.validation_split_train_cnn)
             self.ui.status_textbox.setText('Using pretrained CNN model')
     
-            
+
+    def display_training_accuracy(self):
+        self.ui.window_change_stack_widget.setCurrentIndex(1)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
