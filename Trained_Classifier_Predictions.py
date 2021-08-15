@@ -67,7 +67,3 @@ def classify(selected_classifier, directory_of_image,trained_classifiers, labels
         dict[4] = 'RS'
         dict[5] = 'Scratch'
         return dict[np.argmax(final_ans)]
-
-
-
-
