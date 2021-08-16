@@ -1,5 +1,5 @@
 #importing modules
-import os, sys, threading
+import os, sys, threading, time
 from pathlib import Path
 
 #import GUI modules
@@ -31,6 +31,11 @@ class UserInterface(QWidget):
         self.ui.train_cnn_model_btn.clicked[bool].connect(self.train_convolutional_neural_network_model)
         self.ui.display_training_accuracy_btn.clicked[bool].connect(self.display_training_accuracy)
 
+        self.ui.back_to_training_btn.clicked[bool].connect(self.go_to_training_window)
+        self.ui.back_to_training_btn_2.clicked[bool].connect(self.go_to_training_window)
+        self.ui.proceed_to_defect_detection_btn_2.clicked[bool].connect(self.go_to_defect_detection_window)
+        self.ui.proceed_to_defect_detection_btn.clicked[bool].connect(self.go_to_defect_detection_window)
+
         self.show()
 
     def browse_dataset_path(self):
@@ -54,6 +59,7 @@ class UserInterface(QWidget):
             self.model_training_obj.extract_features_using_glcm(dist=self.glcm_pixel_distance, 
                                                                 angle=self.glcm_pixel_pair_angle)
             self.model_training_obj.prepare_dataset_for_supervised_learning(self.model_training_obj.glcm_image_features, 0.25, "GLCM")
+            print(self.model_training_obj.glcm_split_dataset)
             self.ui.status_textbox.setText('GLCM features computed!')
 
     def extract_lbglcm_features(self):
@@ -85,10 +91,11 @@ class UserInterface(QWidget):
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_random_forest_classifier(self.number_of_trees_rf_model, self.maximum_features_selected_rf,1,1500,-1)
-            # self.random_forest_training_thread = threading.Thread(target=self.model_training_obj.train_random_forest_classifier, 
-            #                                                 kwargs={'number_of_trees':self.number_of_trees_rf_model, 
-            #                                                   'max_features_to_classify':self.maximum_features_selected_rf})
+            # self.model_training_obj.train_random_forest_classifier(self.number_of_trees_rf_model, self.maximum_features_selected_rf,1,1500,-1)
+            self.random_forest_training_thread = threading.Thread(target=self.model_training_obj.train_random_forest_classifier, 
+                                                            kwargs={'number_of_trees':self.number_of_trees_rf_model, 
+                                                              'max_features_to_classify':self.maximum_features_selected_rf})
+            self.random_forest_training_thread.start()
             self.ui.status_textbox.setText('Random Forest model trained!')
     
     def train_xtra_trees_model(self):
@@ -102,12 +109,11 @@ class UserInterface(QWidget):
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_xtra_trees_classifier(self.number_of_trees_xtra_trees_model, self.maximum_features_selected_xtra_trees, 1, 1500, -1)
-            print(self.model_training_obj.model_accuracies['xtra_trees_glcm'])
-            print(self.model_training_obj.model_accuracies['xtra_trees_lbglcm'])
-            # self.extra_trees_training_thread = threading.Thread(target=self.model_training_obj.train_xtra_trees_classifier, 
-            #                                                 kwargs={'number_of_trees':self.number_of_trees_xtra_trees_mode, 
-            #                                                       'max_features_to_classify':self.maximum_features_selected_xtra_trees})
+            # self.model_training_obj.train_xtra_trees_classifier(self.number_of_trees_xtra_trees_model, self.maximum_features_selected_xtra_trees, 1, 1500, -1)
+            self.extra_trees_training_thread = threading.Thread(target=self.model_training_obj.train_xtra_trees_classifier, 
+                                                            kwargs={'number_of_trees':self.number_of_trees_xtra_trees_model, 
+                                                                  'max_features_to_classify':self.maximum_features_selected_xtra_trees})
+            self.extra_trees_training_thread.start()
             self.ui.status_textbox.setText('Extra Trees model trained!')
 
     def train_gradient_boosting_model(self):
@@ -122,12 +128,12 @@ class UserInterface(QWidget):
             prompt.setIcon(QtWidgets.QMessageBox.Critical)
             ret = prompt.exec_()
         else:
-            self.model_training_obj.train_gradient_boosting_classifier(self.num_estimators_train_gb_model, self.max_features_train_gb_model, 'deviance', 0.2, 1500)
-            print(self.model_training_obj.model_accuracies['gradient_boosting_glcm'])
-            print(self.model_training_obj.model_accuracies['gradient_boosting_lbglcm'])
-            # self.gradient_boosting_thread = threading.Thread(target=self.model_training_obj.train_gradient_boosting_classifier, 
-            #                                                 kwargs={'number_of_trees':self.num_estimators_train_gb_model, 
-            #                                                       'max_features_to_classify':self.max_features_train_gb_model})
+            # self.model_training_obj.train_gradient_boosting_classifier(self.num_estimators_train_gb_model, self.max_features_train_gb_model, 'deviance', 0.2, 1500)
+            self.gradient_boosting_thread = threading.Thread(target=self.model_training_obj.train_gradient_boosting_classifier, 
+                                                            kwargs={'number_of_estimators':self.num_estimators_train_gb_model, 
+                                                                  'max_features_to_classify':self.max_features_train_gb_model,
+                                                                  'learning_rate':self.learning_rate_train_gb_model})
+            self.gradient_boosting_thread.start()
             self.ui.status_textbox.setText('Gradient Boosting model trained!')
     
     def train_convolutional_neural_network_model(self):
@@ -143,21 +149,39 @@ class UserInterface(QWidget):
                 prompt.setIcon(QtWidgets.QMessageBox.Critical)
                 ret = prompt.exec_()
         if not self.ui.pretrained_model_chckbox.isChecked():
-            # self.cnn_thread = threading.Thread(target=self.model_training_obj.CNN, 
-            #                                                 kwargs={'epoch':self.epochs_for_training, 
-            #                                                       'val_split':self.validation_split_train_cnn,
-            #                                                       'save_model': True})
-            self.model_training_obj.CNN(self.epochs_for_training, self.validation_split_train_cnn, True)
+            self.cnn_thread = threading.Thread(target=self.model_training_obj.CNN, 
+                                                            kwargs={'epoch':self.epochs_for_training, 
+                                                                  'val_split':self.validation_split_train_cnn,
+                                                                  'save_model': True})
+            # self.model_training_obj.CNN(self.epochs_for_training, self.validation_split_train_cnn, True)
             self.ui.status_textbox.setText('CNN model trained!')
         else:
-            # self.cnn_thread = threading.Thread(target=self.model_training_obj.pretrained_CNN, 
-            #                                                 kwargs={'validation_split':self.validation_split_train_cnn})
-            self.model_training_obj.pretrained_CNN(self.validation_split_train_cnn)
+            self.cnn_thread = threading.Thread(target=self.model_training_obj.pretrained_CNN, 
+                                                            kwargs={'validation_split':self.validation_split_train_cnn})
+            # self.model_training_obj.pretrained_CNN(self.validation_split_train_cnn)
             self.ui.status_textbox.setText('Using pretrained CNN model')
-    
+        self.cnn_thread.start()
 
     def display_training_accuracy(self):
+        while (self.random_forest_training_thread.is_alive()
+            or self.extra_trees_training_thread.is_alive()
+            or self.gradient_boosting_thread.is_alive()
+            or self.cnn_thread.is_alive()):
+            time.sleep(2)
         self.ui.window_change_stack_widget.setCurrentIndex(1)
+        self.ui.rf_glcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['random_forest_glcm']))
+        self.ui.xtra_trees_glcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['xtra_trees_glcm']))
+        self.ui.gb_glcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['gradient_boosting_glcm']))
+        self.ui.rf_lbglcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['random_forest_lbglcm']))
+        self.ui.xtra_trees_lbglcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['xtra_trees_lbglcm']))
+        self.ui.gb_lbglcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['gradient_boosting_lbglcm']))
+        self.ui.cnn_accuracy_label.setText(str(self.model_training_obj.model_accuracies['CNN']))
+
+    def go_to_training_window(self):
+        self.ui.window_change_stack_widget.setCurrentIndex(0)
+    
+    def go_to_defect_detection_window(self):
+        self.ui.window_change_stack_widget.setCurrentIndex(2)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
