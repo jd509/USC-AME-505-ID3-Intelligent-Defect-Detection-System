@@ -10,11 +10,12 @@ from skimage.feature import greycomatrix, greycoprops
 #importing numpy and pandas
 import numpy as np
 import pandas as pd
+from keras_preprocessing import image
 
 # import module for collecting parameters for models
 import json
 
-class Predict:
+class Predict: 
 
     def __init__(self, image_directory):
         self.image_directory = image_directory
@@ -133,25 +134,22 @@ class Predict:
         df = pd.DataFrame(features)
         return df
 
-    
+
     #Predicting a new image or dataset of images
     def classify_image(self, trained_model, feature):
-        pred = trained_model.predict(feature)
-        return pred
+        return trained_model.predict(feature)
     
     def predict_defect(self,feature_extractor,
-                            machine_learning_model,
-                            trained_model,
+                            select_machine_learning_model,
+                            trained_classification_model,
                             lables):
 
         if feature_extractor == 'GLCM':
             glcm_feature = Predict.extract_glcm_features()
 
-            for key in trained_model:
-                if key == machine_learning_model:
-                    classification = Predict.classify_image(trained_model[machine_learning_model], glcm_feature)
-                    return classification
-
+            for key in trained_classification_model:
+                if key == select_machine_learning_model:
+                    self.classification = Predict.classify_image(trained_classification_model[select_machine_learning_model], glcm_feature)
             # if machine_learning_model == 'Random Forest':
             #     rf_prediction = Predict.pred(trained_model['random_forest'], glcm_feature)
             #     return rf_prediction
@@ -167,10 +165,9 @@ class Predict:
         elif feature_extractor == 'LBGLCM':
             lbglcm_feature = Predict.extract_lbglcm_features()
 
-            for key in trained_model:
-                if key == machine_learning_model:
-                    classification = Predict.classify_image(trained_model[machine_learning_model], lbglcm_feature)
-                    return classification
+            for key in trained_classification_model:
+                if key == select_machine_learning_model:
+                    self.classification = Predict.classify_image(trained_classification_model[select_machine_learning_model], lbglcm_feature)
 
             # if machine_learning_model == 'Random Forest':
             #     rf_prediction = Predict.pred(trained_model['random_forest'], lbglcm_feature)
@@ -185,6 +182,13 @@ class Predict:
             #     return gb_prediction
 
         elif feature_extractor == ' ':
+            predict_image = image.load_img(self.image_directory, target_size = (64, 64))
+            predict_image = image.img_to_array(predict_image)
+            predict_image = np.expand_dims(predict_image, axis = 0)
+            predict_image /= 255
 
+            classification = Predict.classify_image(trained_classification_model['CNN'], predict_image)[0]
+            detect_category = {0 : 'Crazing', 1: 'Inclusion', 2: 'Patches', 3: 'Pitted Surface', 4: 'RS', 5: 'Scratch'}
+            return detect_category[np.argmax(classification)]
 
-
+    

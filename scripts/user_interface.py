@@ -9,6 +9,7 @@ from PyQt5.QtGui import QIcon, QImage, QPalette, QBrush
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QWidget, QMessageBox, QProgressDialog
 from numpy.core.fromnumeric import around
 from train_machine_learning_models import Train
+from predict_defects import Predict
 
 
 class UserInterface(QWidget):
@@ -18,10 +19,12 @@ class UserInterface(QWidget):
         self.ui = uic.loadUi(self.ui_file_path, self)
 
         self.dataset_folder_path = ''
+        self.image_file_path = ''
         self.glcm_feature_extraction_complete = False
         self.lbglcm_feature_extraction_complete = False
 
         # Button Connections
+        # Button Connections - 1
         self.ui.browse_btn.clicked[bool].connect(self.browse_dataset_path)
         self.ui.extract_glcm_features_btn.clicked[bool].connect(self.extract_glcm_features)
         self.ui.extract_lbglcm_features_btn.clicked[bool].connect(self.extract_lbglcm_features)
@@ -31,12 +34,17 @@ class UserInterface(QWidget):
         self.ui.train_cnn_model_btn.clicked[bool].connect(self.train_convolutional_neural_network_model)
         self.ui.display_training_accuracy_btn.clicked[bool].connect(self.display_training_accuracy)
 
+        # Button Connections - 2
         self.ui.back_to_training_btn.clicked[bool].connect(self.go_to_training_window)
         self.ui.back_to_training_btn_2.clicked[bool].connect(self.go_to_training_window)
         self.ui.proceed_to_defect_detection_btn_2.clicked[bool].connect(self.go_to_defect_detection_window)
         self.ui.proceed_to_defect_detection_btn.clicked[bool].connect(self.go_to_defect_detection_window)
 
+        self.ui.browse_btn_2.clicked[bool].connect(self.browse_image_file_path)
+        self.ui.predict_defect_btn.clicked[bool].connect(self.predict_defect)
         self.show()
+
+    # Window 1
 
     def browse_dataset_path(self):
         self.dataset_folder_path = str(QFileDialog.getExistingDirectory())
@@ -179,10 +187,36 @@ class UserInterface(QWidget):
 
     def go_to_training_window(self):
         self.ui.window_change_stack_widget.setCurrentIndex(0)
-    
+
+    def browse_image_file_path(self):
+        self.image_file_path = str(QFileDialog.getOpenFileNames()[0][0])
+        self.ui.image_location_txtbox.setText(self.image_file_path)
+        self.model_prediction_obj = Predict(self.image_file_path)
+        print(self.model_prediction_obj.image_directory)
+        self.ui.status_textbox_2.setText('Image Loaded!')
+
     def go_to_defect_detection_window(self):
         self.ui.window_change_stack_widget.setCurrentIndex(2)
 
+    def predict_defect(self):
+        try:
+            self.select_extracted_feature = str(self.ui.feature_extraction_cmbox.currentText())
+            self.select_machine_learning_model = str(self.ui.machine_learning_model_cmbox.currentText())
+
+        except ValueError:
+            prompt = QtWidgets.QMessageBox()
+            prompt.setWindowTitle("Selection Error")
+            prompt.setText("Please select appropriate options in the drop down menu")
+            prompt.setIcon(QtWidgets.QMessageBox.Critical)
+            ret = prompt.exec_()
+        else:
+            self.ui.feature_extraction_method_label.setText(self.select_extracted_feature)
+            self.ui.machine_learning_model_label.setText(self.select_machine_learning_model)
+
+            self.pixmap = QtGui.QPixmap(self.model_prediction_obj.image_directory)
+            self.ui.input_image_label.setPixmap(self.pixmap.scaled(256,256))
+        
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = UserInterface()

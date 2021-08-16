@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>0</x>
-     <y>0</y>
+     <y>10</y>
      <width>871</width>
      <height>1001</height>
     </rect>
@@ -14785,6 +14785,21 @@ color: rgb(255, 255, 255);</string>
           <height>25</height>
          </rect>
         </property>
+        <item>
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>glcm</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>lbglcm</string>
+         </property>
+        </item>
        </widget>
       </widget>
       <widget class="QFrame" name="frame_14">
@@ -14811,6 +14826,31 @@ color: rgb(255, 255, 255);</string>
           <height>25</height>
          </rect>
         </property>
+        <item>
+         <property name="text">
+          <string/>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Random Forest </string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Extra Tree</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Gradient Boosting</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>CNN</string>
+         </property>
+        </item>
        </widget>
        <widget class="QLabel" name="label_50">
         <property name="geometry">
@@ -15077,12 +15117,26 @@ color: rgb(255, 255, 255);</string>
        </property>
       </widget>
      </widget>
+     <widget class="QLineEdit" name="status_textbox_2">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>50</y>
+        <width>321</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="readOnly">
+       <bool>true</bool>
+      </property>
+     </widget>
      <zorder>frame_12</zorder>
      <zorder>image_location_txtbox</zorder>
      <zorder>browse_btn_2</zorder>
      <zorder>label_46</zorder>
      <zorder>label_49</zorder>
      <zorder>frame_15</zorder>
+     <zorder>status_textbox_2</zorder>
     </widget>
    </widget>
   </widget>
