@@ -29,7 +29,7 @@
     <string notr="true">background-color: rgb(46, 52, 54);</string>
    </property>
    <property name="currentIndex">
-    <number>1</number>
+    <number>2</number>
    </property>
    <widget class="QWidget" name="training_page">
     <widget class="QFrame" name="frame">
@@ -2253,7 +2253,7 @@ color: rgb(255, 255, 255);</string>
         </property>
         <item>
          <property name="text">
-          <string> </string>
+          <string/>
          </property>
         </item>
         <item>
@@ -2951,7 +2951,7 @@ color: rgb(255, 255, 255);</string>
         </property>
         <item>
          <property name="text">
-          <string> </string>
+          <string/>
          </property>
         </item>
         <item>
@@ -7895,7 +7895,7 @@ color: rgb(255, 255, 255);</string>
         </property>
         <item>
          <property name="text">
-          <string> </string>
+          <string/>
          </property>
         </item>
         <item>
