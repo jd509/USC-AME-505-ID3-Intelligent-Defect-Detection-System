@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 #importing os module
+from math import floor
 from operator import mod
 import os
 from pathlib import Path
@@ -234,9 +235,14 @@ class Train:
             if y_encoded[i] not in self.coded_y_values:
                 self.coded_y_values[y_encoded[i]] = y_unique[j]
                 j += 1
+        
+        if feature_type == "GLCM":
+            x_train, x_test, y_train, y_test = train_test_split(x, y_encoded, test_size=test_size, random_state=42)
+            self.glcm_split_dataset = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
-            x, y_encoded, test_size=test_size, random_state=42)
+        if feature_type == "LBGLCM":
+            x_train, x_test, y_train, y_test = train_test_split(x, y_encoded, test_size=test_size, random_state=42)
+            self.lbglcm_split_dataset = {'x_train': x_train, 'y_train': y_train, 'x_test': x_test, 'y_test': y_test}
 
     def train_random_forest_classifier(self,number_of_trees=None, 
                                             max_features_to_classify = None,
@@ -365,7 +371,7 @@ class Train:
         y_prediction = self.trained_classifier_models['gradient_boosting_lbglcm'].predict(self.lbglcm_split_dataset['x_test'])
         self.model_accuracies['gradient_boosting_lbglcm']  = accuracy_score(self.lbglcm_split_dataset['y_test'], y_prediction)
                                                         
-    def CNN(self, epoch, val_split, save_model):
+    def CNN(self, epoch = None, val_split = None, save_model = True):
 
         # Creating the model
 
@@ -391,9 +397,15 @@ class Train:
 
         # Setting up directory and validation split for the dataset
         data_dir = self.dataset_directory
+
+        print(data_dir)
+
         if val_split is None:
             val_split = self.machine_learning_params['CNN']['val_split']
-        val_split = val_split
+
+        if epoch is None:
+            epoch = self.machine_learning_params['CNN']['epoch']
+
         dataset_image_generator = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True, vertical_flip=True,
                                                      validation_split=val_split)
 
@@ -417,6 +429,9 @@ class Train:
                                                                        IMG_HEIGHT, IMG_WIDTH),
                                                                    class_mode='categorical', subset="validation")
 
+        print(dataset_image_generator)
+        print(val_data_gen)
+
         model = create_model()
 
         if save_model:
@@ -426,9 +441,9 @@ class Train:
         # Generating history of the model and fitting dataset
         history = model.fit(
             train_data_gen,
-            steps_per_epoch=batch_size_train,
+            steps_per_epoch=(epochs*train_data_gen.samples)/batch_size_train,
             epochs=epochs,
-            validation_data=val_data_gen, validation_steps=batch_size_test)
+            validation_data=val_data_gen, validation_steps=(epochs*val_data_gen.samples)/batch_size_test)
 
         # Getting validation accuracy
         val_acc = history.history['val_accuracy']
@@ -437,7 +452,10 @@ class Train:
         self.model_accuracies['CNN'] = val_acc
 
     #Load Pretrained CNN Model
-    def pretrained_CNN(self, validation_split):
+    def pretrained_CNN(self, validation_split = None):
+
+        if validation_split is None:
+            validation_split = self.machine_learning_params['CNN']['val_split']
 
         # give validation split here
         val_split = validation_split
