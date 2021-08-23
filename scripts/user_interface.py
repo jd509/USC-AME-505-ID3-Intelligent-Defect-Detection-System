@@ -9,6 +9,7 @@ from PyQt5.QtGui import QIcon, QImage, QPalette, QBrush
 from PyQt5.QtWidgets import QApplication, QDialog, QFileDialog, QMainWindow, QWidget, QMessageBox, QProgressDialog
 from numpy.core.fromnumeric import around
 from train_machine_learning_models import Train
+from predict_defects import Predict
 
 
 class UserInterface(QWidget):
@@ -18,8 +19,16 @@ class UserInterface(QWidget):
         self.ui = uic.loadUi(self.ui_file_path, self)
 
         self.dataset_folder_path = ''
+        self.image_file_path = ''
         self.glcm_feature_extraction_complete = False
         self.lbglcm_feature_extraction_complete = False
+
+        self.training_model_names_dict = {
+            "Random Forest Model": "random_forest",
+            "Extra Trees Model": "xtra_trees",
+            "Gradient Boosting Model": "gradient_boosting",
+            "Convolutional Neural Network": "CNN"
+        }
 
         # Button Connections
         self.ui.browse_btn.clicked[bool].connect(self.browse_dataset_path)
@@ -30,12 +39,12 @@ class UserInterface(QWidget):
         self.ui.train_gradient_boosting_model_btn.clicked[bool].connect(self.train_gradient_boosting_model)
         self.ui.train_cnn_model_btn.clicked[bool].connect(self.train_convolutional_neural_network_model)
         self.ui.display_training_accuracy_btn.clicked[bool].connect(self.display_training_accuracy)
-
         self.ui.back_to_training_btn.clicked[bool].connect(self.go_to_training_window)
         self.ui.back_to_training_btn_2.clicked[bool].connect(self.go_to_training_window)
         self.ui.proceed_to_defect_detection_btn_2.clicked[bool].connect(self.go_to_defect_detection_window)
         self.ui.proceed_to_defect_detection_btn.clicked[bool].connect(self.go_to_defect_detection_window)
-
+        self.ui.browse_btn_2.clicked[bool].connect(self.browse_image_file_path)
+        self.ui.predict_defect_btn.clicked[bool].connect(self.predict_defect)
         self.show()
 
     def browse_dataset_path(self):
@@ -176,13 +185,52 @@ class UserInterface(QWidget):
         self.ui.xtra_trees_lbglcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['xtra_trees_lbglcm']))
         self.ui.gb_lbglcm_accuracy_label.setText(str(self.model_training_obj.model_accuracies['gradient_boosting_lbglcm']))
         self.ui.cnn_accuracy_label.setText(str(self.model_training_obj.model_accuracies['CNN']))
+        self.ui.status_textbox.setText('Displayed Training Results')
 
     def go_to_training_window(self):
         self.ui.window_change_stack_widget.setCurrentIndex(0)
-    
+        self.ui.status_textbox.setText('Loaded Training Mode')
+
+    def browse_image_file_path(self):
+        self.image_file_path = str(QFileDialog.getOpenFileNames()[0][0])
+        self.ui.image_location_txtbox.setText(self.image_file_path)
+        self.model_prediction_obj = Predict(self.image_file_path)
+        print(self.model_prediction_obj.image_directory)
+        self.ui.status_textbox.setText('Image Loaded!')
+
     def go_to_defect_detection_window(self):
         self.ui.window_change_stack_widget.setCurrentIndex(2)
+        self.ui.status_textbox.setText('Loaded Defect Detection Mode')
 
+    def predict_defect(self):
+        try:
+            self.select_extracted_feature = str(self.ui.feature_extraction_cmbox.currentText())
+            self.select_machine_learning_model = str(self.ui.machine_learning_model_cmbox.currentText())
+
+        except ValueError:
+            prompt = QtWidgets.QMessageBox()
+            prompt.setWindowTitle("Selection Error")
+            prompt.setText("Please select appropriate options in the drop down menu")
+            prompt.setIcon(QtWidgets.QMessageBox.Critical)
+            ret = prompt.exec_()
+        else:
+            self.ui.feature_extraction_method_label.setText(self.select_extracted_feature)
+            self.ui.machine_learning_model_label.setText(self.select_machine_learning_model)
+            self.pixmap = QtGui.QPixmap(self.model_prediction_obj.image_directory)
+            self.ui.input_image_label.setPixmap(self.pixmap.scaled(256,256))
+            prediction_result = " "
+            if self.training_model_names_dict[self.select_machine_learning_model] == 'CNN':
+                prediction_result = self.model_prediction_obj.predict_defect(feature_extractor= " ", 
+                                                        select_machine_learning_model= self.training_model_names_dict[self.select_machine_learning_model],
+                                                        trained_classification_model= self.model_training_obj.trained_classifier_models)
+            else:
+                prediction_result = self.model_prediction_obj.predict_defect(feature_extractor= self.select_extracted_feature, 
+                                                        select_machine_learning_model= self.training_model_names_dict[self.select_machine_learning_model] + "_" + self.select_extracted_feature.lower(),
+                                                        trained_classification_model= self.model_training_obj.trained_classifier_models,
+                                                        labels=self.model_training_obj.coded_y_values)
+            self.ui.result_label.setText(prediction_result)
+        
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = UserInterface()
