@@ -4,6 +4,7 @@
 from math import floor
 from operator import mod
 import os
+import pathlib
 from pathlib import Path
 from keras.metrics import accuracy
 
@@ -12,9 +13,10 @@ import numpy as np
 import pandas as pd
 
 # keras for CNN
-from keras.layers import Dense, Conv2D, Flatten, MaxPooling2D
-from keras.models import Sequential
-from keras.preprocessing.image import ImageDataGenerator
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+from tensorflow.keras.models import Sequential
 
 # importing modules for supervised learning algorithms
 from sklearn.ensemble import ExtraTreesClassifier
@@ -373,77 +375,95 @@ class Train:
                                                         
     def CNN(self, epoch = None, val_split = None, save_model = True):
 
-        # Creating the model
-
-        def create_model():
-            model = Sequential([
-                Conv2D(16, 3, padding='same', activation='relu',
-                       input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
-                MaxPooling2D(),
-                Conv2D(32, 3, padding='same', activation='relu'),
-                MaxPooling2D(),
-                Conv2D(64, 3, padding='same', activation='relu'),
-                MaxPooling2D(),
-                Flatten(),
-                Dense(512, activation='relu'),
-                Dense(6, activation='softmax')])
-
-        # Compiling Model using optimizer and loss functions
-            model.compile(optimizer='adam',
-                          loss='categorical_crossentropy',
-                          metrics=['accuracy'])
-            model.summary()
-            return model
-
-        # Setting up directory and validation split for the dataset
-        data_dir = self.dataset_directory
-
-        print(data_dir)
+        dataset_folder = pathlib.Path(self.dataset_directory)
 
         if val_split is None:
             val_split = self.machine_learning_params['CNN']['val_split']
-
+        
         if epoch is None:
             epoch = self.machine_learning_params['CNN']['epoch']
+        
+        image_count = len(list(dataset_folder.glob('*/*.jpg')))
+        print(image_count)
 
-        dataset_image_generator = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True, vertical_flip=True,
-                                                     validation_split=val_split)
+        batch_size = self.machine_learning_params['CNN']['batch_size']
+        img_height = self.machine_learning_params['CNN']['image_dims'][0]
+        img_width = self.machine_learning_params['CNN']['image_dims'][1]
 
-        # Setting up batch size and image parameters
-        batch_size_train = 600
-        batch_size_test = 400
-        if epoch is None:
-            epoch = self.machine_learning_params['CNN']['epoch']
+        train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        dataset_folder,
+        validation_split=val_split,
+        subset="training",
+        seed=123,
+        color_mode="rgb",
+        image_size=(img_height, img_width),
+        label_mode="categorical",
+        batch_size=batch_size)
+
+        val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        dataset_folder,
+        validation_split=val_split,
+        subset="validation",
+        seed=123,
+        color_mode="rgb",
+        label_mode="categorical",
+        image_size=(img_height, img_width),
+        batch_size=batch_size)
+
+        class_names = train_ds.class_names
+        print(class_names)
+
+        AUTOTUNE = tf.data.AUTOTUNE
+
+        train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+        val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+        num_classes = len(class_names)
+
+
+        data_augmentation = keras.Sequential(
+        [
+            layers.experimental.preprocessing.RandomFlip("horizontal", 
+                                                        input_shape=(img_height, 
+                                                                    img_width,
+                                                                    3)),
+            layers.experimental.preprocessing.RandomRotation(0.1),
+            layers.experimental.preprocessing.RandomZoom(0.1),
+        ]
+        )
+
+        model = Sequential([
+        data_augmentation,
+        layers.experimental.preprocessing.Rescaling(1./255),
+        layers.Conv2D(16, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Conv2D(32, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Conv2D(64, 3, padding='same', activation='relu'),
+        layers.MaxPooling2D(),
+        layers.Flatten(),
+        layers.Dense(512, activation='relu'),
+        layers.Dense(num_classes, activation='softmax')
+        ])
+
+        model.compile(optimizer='adam',
+                    loss=tf.keras.losses.CategoricalCrossentropy(),
+                    metrics=['accuracy'])
+
+        model.summary()
+
         epochs = epoch
-        IMG_HEIGHT = 64
-        IMG_WIDTH = 64
 
-        # Generating training and test dataset
-        train_data_gen = dataset_image_generator.flow_from_directory(batch_size=batch_size_train, directory=data_dir,
-                                                                     subset="training", shuffle=True,
-                                                                     target_size=(
-                                                                         IMG_HEIGHT, IMG_WIDTH),
-                                                                     class_mode='categorical')
-        val_data_gen = dataset_image_generator.flow_from_directory(batch_size=batch_size_test, directory=data_dir,
-                                                                   target_size=(
-                                                                       IMG_HEIGHT, IMG_WIDTH),
-                                                                   class_mode='categorical', subset="validation")
-
-        print(dataset_image_generator)
-        print(val_data_gen)
-
-        model = create_model()
+        history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=epochs
+        )
 
         if save_model:
-            filepath = os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt'
-            model.save(filepath, overwrite=True, include_optimizer=True)
-
-        # Generating history of the model and fitting dataset
-        history = model.fit(
-            train_data_gen,
-            steps_per_epoch=(epochs*train_data_gen.samples)/batch_size_train,
-            epochs=epochs,
-            validation_data=val_data_gen, validation_steps=(epochs*val_data_gen.samples)/batch_size_test)
+            save_model_path =  os.path.dirname(os.getcwd()) + '/saved_model/'
+            save_model_dir = save_model_path + 'training_model_1.h5'
+            model.save(save_model_dir)
 
         # Getting validation accuracy
         val_acc = history.history['val_accuracy']
@@ -454,59 +474,60 @@ class Train:
     #Load Pretrained CNN Model
     def pretrained_CNN(self, validation_split = None):
 
+        dataset_folder = pathlib.Path(self.dataset_directory)
+
         if validation_split is None:
             validation_split = self.machine_learning_params['CNN']['val_split']
+                
+        image_count = len(list(dataset_folder.glob('*/*.jpg')))
+        print(image_count)
 
-        # give validation split here
-        val_split = validation_split
+        batch_size = self.machine_learning_params['CNN']['batch_size']
+        img_height = self.machine_learning_params['CNN']['image_dims'][0]
+        img_width = self.machine_learning_params['CNN']['image_dims'][1]
 
-        # Training and test data generation with needed batch size
-        dataset_image_generator = ImageDataGenerator(rescale=1. / 255, horizontal_flip=True, vertical_flip=True,
-                                                     validation_split=val_split)
+        train_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        dataset_folder,
+        validation_split=validation_split,
+        subset="training",
+        seed=123,
+        color_mode="rgb",
+        image_size=(img_height, img_width),
+        label_mode="categorical",
+        batch_size=batch_size)
 
-        batch_size_train = 600
-        batch_size_test = 400
-        IMG_HEIGHT = 64
-        IMG_WIDTH = 64
+        val_ds = tf.keras.preprocessing.image_dataset_from_directory(
+        dataset_folder,
+        validation_split=validation_split,
+        subset="validation",
+        seed=123,
+        color_mode="rgb",
+        label_mode="categorical",
+        image_size=(img_height, img_width),
+        batch_size=batch_size)
 
-        # Creating a model
-        def create_model():
-            model = Sequential([
-                Conv2D(16, 3, padding='same', activation='relu',
-                       input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
-                MaxPooling2D(),
-                Conv2D(32, 3, padding='same', activation='relu'),
-                MaxPooling2D(),
-                Conv2D(64, 3, padding='same', activation='relu'),
-                MaxPooling2D(),
-                Flatten(),
-                Dense(512, activation='relu'),
-                Dense(6, activation='softmax')])
+        class_names = train_ds.class_names
+        print(class_names)
 
-            model.compile(optimizer='adam',
-                          loss='categorical_crossentropy',
-                          metrics=['accuracy'])
+        AUTOTUNE = tf.data.AUTOTUNE
 
-            model.summary()
-            return model
+        train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+        val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
-        val_data_gen = dataset_image_generator.flow_from_directory(batch_size=batch_size_test, directory=self.dataset_directory,
-                                                                   target_size=(
-                                                                       IMG_HEIGHT, IMG_WIDTH),
-                                                                   class_mode='categorical', subset="validation")
+        num_classes = len(class_names)
 
-        # Model creation to load the checkpoint
-        new_model = create_model()
-
-        #*************************Loading Checkpoint Path***********************************#
-        check_path = os.path.dirname(os.getcwd()) + '/' + 'trained_cnn_model.ckpt'
+        save_model_path =  os.path.dirname(os.getcwd()) + '/saved_model/'
+        save_model_dir = save_model_path + 'training_model_1.h5'
 
         # Loading weights from the checkpoint
-        new_model.load_weights(check_path)
+        model = tf.keras.models.load_model(save_model_dir)
+        model.summary()
 
         # Getting loss and accuracy values
-        loss, acc = new_model.evaluate(val_data_gen)
+        loss, acc = model.evaluate(val_ds)
 
-        self.trained_classifier_models['CNN'] = new_model       
+        print('Restored model, accuracy: {:5.2f}%'.format(100 * acc))
+
+        self.trained_classifier_models['CNN'] = model       
         self.model_accuracies['CNN'] = acc
 

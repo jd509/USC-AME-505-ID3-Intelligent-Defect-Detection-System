@@ -29,6 +29,8 @@
     "CNN" :
     {
         "epoch" : 3,
-        "val_split" : 0.25
+        "val_split" : 0.25,
+        "batch_size": 32,
+        "image_dims": [64,64]
     }
 }
