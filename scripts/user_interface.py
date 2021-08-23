@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #importing modules
 import os, sys, threading, time
 from pathlib import Path
@@ -233,6 +235,7 @@ class UserInterface(QWidget):
         
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon(os.path.dirname(os.getcwd()) + '/app_logo/logo.png'))
     widget = UserInterface()
     sys.exit(app.exec())
 
