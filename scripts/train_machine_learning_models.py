@@ -1,12 +1,9 @@
 #!/usr/bin/python3
 
 #importing os module
-from math import floor
-from operator import mod
 import os
 import pathlib
 from pathlib import Path
-from keras.metrics import accuracy
 
 # importing numpy and pandas for computation and storage
 import numpy as np
