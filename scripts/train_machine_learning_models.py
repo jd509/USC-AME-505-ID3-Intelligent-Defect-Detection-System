@@ -514,8 +514,6 @@ class Train:
         train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
         val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
 
-        num_classes = len(class_names)
-
         save_model_path =  os.path.dirname(os.getcwd()) + '/saved_model/'
         save_model_dir = save_model_path + 'training_model_1.h5'
 
