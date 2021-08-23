@@ -64,12 +64,22 @@ class Train:
         self.coded_y_values = {}
         self.trained_classifier_models = {}
         self.model_accuracies = {}
+
+
     def extract_features_using_glcm(self, 
                                     dist = None, 
                                     angle = None, 
                                     num_grey_levels = None, 
                                     symmetric = True, normed = True):
-        
+        """Function to generate glcm features
+
+        Args:
+            dist ([int], optional): Defaults to None.
+            angle ([int], optional): Defaults to None.
+            num_grey_levels ([int], optional): Defaults to None.
+            symmetric (bool, optional): Defaults to True.
+            normed (bool, optional): Defaults to True.
+        """
         # make list for each feature and a dictionary to have all features
         if dist is None:
             dist = self.image_extraction_params['glcm']['pixel_offset_distance']
@@ -141,6 +151,18 @@ class Train:
                                       symmetric=True, normed=True,
                                       num_neighbors=None, radius_of_neighbors=None,
                                       method=None):
+        """Function to generate LBGLCM features
+
+        Args:
+            dist ([int], optional): Defaults to None.
+            angle ([int], optional): Defaults to None.
+            num_grey_levels ([int], optional): Defaults to None.
+            symmetric (bool, optional): Defaults to True.
+            normed (bool, optional): Defaults to True.
+            num_neighbors ([int], optional): Defaults to None.
+            radius_of_neighbors ([int], optional): Defaults to None.
+            method ([str], optional): Defaults to None.
+        """
 
         # make list for each feature and a dictionary to have all features
         if dist is None:
@@ -226,8 +248,15 @@ class Train:
         self.lbglcm_image_features = pd.DataFrame(features)
         print(self.lbglcm_image_features)
 
+
     def prepare_dataset_for_supervised_learning(self, image_feature_dataframe, test_size, feature_type):
-        
+        """Function to prepare dataset for supervised learning
+
+        Args:
+            image_feature_dataframe ([pandas.Dataframe]): Image Features Dataframe
+            test_size ([float]): Split size for test dataset
+            feature_type ([str]): Type of feature extraction
+        """
         y = image_feature_dataframe.pop('type')
         x = image_feature_dataframe
         y_encoded, y_unique = pd.factorize(y)
@@ -251,7 +280,15 @@ class Train:
                                             min_sample_leaf=None, 
                                             max_leaf_nodes=None, 
                                             number_of_parallel_workers=None):
+        """Function to train random forest model
 
+        Args:
+            number_of_trees ([int], optional): Defaults to None.
+            max_features_to_classify ([str], optional): Defaults to None.
+            min_sample_leaf ([int], optional): Defaults to None.
+            max_leaf_nodes ([int], optional): Defaults to None.
+            number_of_parallel_workers ([int], optional): Defaults to None.
+        """
         if number_of_trees is None:
             number_of_trees = self.machine_learning_params['random_forest_classifier']['number_of_tress']
             pass
@@ -292,7 +329,15 @@ class Train:
                                             min_sample_leaf=None, 
                                             max_leaf_nodes=None, 
                                             number_of_parallel_workers=None):
+        """Function to train extra trees model
 
+        Args:
+            number_of_trees ([int], optional): Defaults to None.
+            max_features_to_classify ([str], optional): Defaults to None.
+            min_sample_leaf ([int], optional): Defaults to None.
+            max_leaf_nodes ([int], optional): Defaults to None.
+            number_of_parallel_workers ([int], optional): Defaults to None.
+        """
         if number_of_trees is None:
             number_of_trees = self.machine_learning_params['xtra_trees_classifier']['number_of_tress']
             pass
@@ -335,7 +380,15 @@ class Train:
                                                 loss_function=None, 
                                                 learning_rate=None, 
                                                 max_leaf_nodes=None):
+        """Function to train gradient boosting model
 
+        Args:
+            number_of_estimators ([int], optional): Defaults to None.
+            max_features_to_classify ([str], optional): Defaults to None.
+            loss_function ([str], optional): Defaults to None.
+            learning_rate ([float], optional): Defaults to None.
+            max_leaf_nodes ([int], optional): Defaults to None.
+        """
         if number_of_estimators is None:
             number_of_estimators = self.machine_learning_params['gradient_boosting_classifier']['number_of_estimators']
             pass
@@ -374,7 +427,13 @@ class Train:
         self.model_accuracies['gradient_boosting_lbglcm']  = accuracy_score(self.lbglcm_split_dataset['y_test'], y_prediction)
                                                         
     def CNN(self, epoch = None, val_split = None, save_model = True):
+        """Function to train Neural Network
 
+        Args:
+            epoch ([int], optional): Defaults to None.
+            val_split ([float], optional): Defaults to None.
+            save_model (bool, optional): Defaults to True.
+        """
         dataset_folder = pathlib.Path(self.dataset_directory)
 
         if val_split is None:
@@ -473,7 +532,11 @@ class Train:
 
     #Load Pretrained CNN Model
     def pretrained_CNN(self, validation_split = None):
+        """Function to load a pretrained model
 
+        Args:
+            validation_split ([float], optional): Defaults to None.
+        """
         dataset_folder = pathlib.Path(self.dataset_directory)
 
         if validation_split is None:

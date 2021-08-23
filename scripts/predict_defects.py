@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 # importing os module
 import os
 
@@ -30,7 +32,12 @@ class Predict:
 
     def extract_glcm_features(self, dist=None,
                                     angle=None):
+        """Function to extract glcm features for single image prediction
 
+        Args:
+            dist ([int], optional): Defaults to None.
+            angle ([int], optional): Defaults to None.
+        """
         if dist is None:
             dist = self.image_extraction_params['glcm']['pixel_offset_distance']
             pass
@@ -83,6 +90,13 @@ class Predict:
     def extract_lbglcm_features(self,dist=None,
                                     angle=None,
                                     radius=None):
+        """Function to generate lbglcm features
+
+        Args:
+            dist ([int], optional): Defaults to None.
+            angle ([int], optional): Defaults to None.
+            radius ([int], optional): Defaults to None.
+        """
         if dist is None:
             dist = self.image_extraction_params['lbglcm']['pixel_offset_distance']
             pass
@@ -143,7 +157,17 @@ class Predict:
                             select_machine_learning_model,
                             trained_classification_model,
                             labels = None):
+        """Function to predict the defect for selected image
 
+        Args:
+            feature_extractor ([str])
+            select_machine_learning_model ([str])
+            trained_classification_model ([dict])
+            labels ([dict], optional): Defaults to None.
+
+        Returns:
+            [str]: type of defect
+        """
         if feature_extractor == 'GLCM':
             glcm_feature = self.extract_glcm_features()
 
