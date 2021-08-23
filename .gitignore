@@ -1,2 +1,2 @@
-**.ckpt/
-__pycache__/
+saved_model/
+scripts/__pycache__/
