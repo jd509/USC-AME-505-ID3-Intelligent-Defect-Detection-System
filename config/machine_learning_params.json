@@ -1,0 +1,36 @@
+{
+    "random_forest_classifier":
+    {
+        "number_of_tress" : 100,
+        "max_features_to_classify" : "auto",
+        "min_sample_leaf" : 1,
+        "max_leaf_nodes" : 1500,
+        "number_of_parallel_workers" : -1
+    },
+
+    "xtra_trees_classifier" :
+    {
+        "number_of_trees" : 100,
+        "max_features_to_classify" : "auto",
+        "min_sample_leaf" : 1,
+        "max_leaf_nodes" : 1500,
+        "number_of_parallel_workers" : -1
+    },
+
+    "gradient_boosting_classifier" : 
+    {
+        "number_of_estimators" : 100,
+        "max_features_to_classify" : "auto",
+        "loss_function" : "deviance",
+        "learning_rate" : 0.2,
+        "max_leaf_nodes" : 1500
+    },
+
+    "CNN" :
+    {
+        "epoch" : 3,
+        "val_split" : 0.25,
+        "batch_size": 32,
+        "image_dims": [64,64]
+    }
+}

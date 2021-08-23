@@ -1,8 +1,8 @@
-numpy>=1.20.0
+numpy<=1.19.2
 pandas>=1.2.0
 keras>=2.2.0
 scikit-learn>=0.22
 PyQt5>=5.14.1
 Pillow>=7.0.0
 scikit-image>=0.15.0
-tensorflow>=2.0.0
+tensorflow<=2.5
